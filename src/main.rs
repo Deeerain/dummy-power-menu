@@ -1,6 +1,6 @@
-use crate::glib::clone;
 use gtk::gdk::keys::constants::Escape;
 use gtk::glib::Propagation;
+use gtk::glib::clone;
 use gtk::{Application, Label, Window, glib};
 use gtk::{ApplicationWindow, Box, Button, prelude::*};
 use gtk_layer_shell::LayerShell;
@@ -48,7 +48,7 @@ fn build_ui(app: &Application) {
         },
         Action {
             icon: "󰢠",
-            command: "hibernate", // исправлена опечатка
+            command: "hibernate",
             description: "Гибернация",
             requires_confirmation: false,
         },
