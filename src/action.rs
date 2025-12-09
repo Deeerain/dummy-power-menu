@@ -52,7 +52,8 @@ impl Action {
     }
 }
 
-pub fn execute_system_action(action: &str) {
+#[cfg(not(debug_assertions))]
+pub fn execute_system_action(action: &str) -> Result<std::process::Child, std::io::Error> {
     let result = match action {
         "shutdown" => Command::new("systemctl").arg("poweroff").spawn(),
         "soft-reboot" => Command::new("systemctl").arg("reboot").spawn(),
@@ -62,14 +63,17 @@ pub fn execute_system_action(action: &str) {
         "lock" => Command::new("hyprctl")
             .args(["dispatch", "exec", "hyprlock"])
             .spawn(),
-        _ => {
-            eprintln!("Unknown action: {}", action);
-            return;
-        }
+        _ => Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Command not found",
+        )),
     };
 
-    match result {
-        Ok(_) => println!("Action '{}' executed", action),
-        Err(e) => eprintln!("Failed to execute '{}': {}", action, e),
-    }
+    result
+}
+
+#[cfg(debug_assertions)]
+pub fn execute_system_action(action: &str) -> Result<std::process::Child, std::io::Error> {
+    let result = Command::new("echo").arg(action).spawn();
+    result
 }
