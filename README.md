@@ -1,6 +1,6 @@
 # Dummy Power Menu
 
-Простое Powermenu для окружения Hyprand
+Простое Powermenu для окружения Hyprland
 
 <details>
 <summary><h2>Скриншоты</h2></summary>
