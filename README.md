@@ -5,7 +5,7 @@
 <details>
 <summary><h2>Скриншоты</h2></summary>
 
-![](./screenshots/0.png)
+![](./screenshots/0.jpg)
 
-![](./screenshots/1.png)
+![](./screenshots/1.jpg)
 </details>
