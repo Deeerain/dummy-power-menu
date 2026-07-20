@@ -94,6 +94,16 @@ fn build_ui(app: &Application) {
 }
 
 fn action_definitions() -> Vec<PowerAction> {
+    let exit_spec = if is_hyprland_running() {
+        Some(CommandSpec::new("hyprctl", &["dispatch", "exit"]))
+    } else if is_sway_running() {
+        Some(CommandSpec::new("swaymsg", &["exit"]))
+    } else if is_gnome_running() {
+        Some(CommandSpec::new("gnome-session-quit", &["--power-off"]))
+    } else {
+        Some(CommandSpec::new("loginctl", &["terminate-session", "self"]))
+    };
+
     vec![
         PowerAction {
             command: PowerCommand::Shutdown,
@@ -113,7 +123,7 @@ fn action_definitions() -> Vec<PowerAction> {
         PowerAction {
             command: PowerCommand::Exit,
             label: "Exit session",
-            spec: Some(CommandSpec::new("hyprctl", &["dispatch", "exit"])),
+            spec: exit_spec,
         },
         PowerAction {
             command: PowerCommand::CloseMenu,
@@ -121,6 +131,8 @@ fn action_definitions() -> Vec<PowerAction> {
             spec: None,
         },
     ]
+
+    
 }
 
 fn setup_layer_shell(window: &ApplicationWindow) {
@@ -167,4 +179,18 @@ fn build_buttons(sender: &Sender<PowerCommand>, actions: &[PowerAction]) -> Vec<
     }
 
     result
+}
+
+fn is_hyprland_running() -> bool {
+    std::env::var("HYPRLAND_INSTANCE_SIGNATURE").is_ok()
+}
+
+fn is_sway_running() -> bool {
+    std::env::var("SWAYSOCK").is_ok()
+}
+
+fn is_gnome_running() -> bool {
+    std::env::var("XDG_CURRENT_DESKTOP")
+        .map(|desktop| desktop.to_lowercase().contains("gnome"))
+        .unwrap_or(false)
 }
