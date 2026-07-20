@@ -1,0 +1,55 @@
+name: Build and Check
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: sudo apt-get update
+       sudo apt-get install -y \ 
+       libgtk-4-dev \
+       libgtk4-layer-shell-dev \
+       pkg-config \
+       build-essential
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
+
+    - name: Rust Cache
+      uses: Swatinem/rust-cache@v2
+
+    - name: Check Formatting
+      run: cargo fmt --check
+    
+    - name: Run Clippy
+      run: cargo clippy -- -D warnings
+
+    - name: Build Project
+      run: cargo build --release
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: 
+          target/release/dummy-power-menu
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
