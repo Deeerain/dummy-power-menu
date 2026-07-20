@@ -1,4 +1,4 @@
-name: Build and Check
+name: Build and Release (Docker Mode)
 
 on:
   pull_request:
@@ -15,38 +15,48 @@ permissions:
   actions: read
 
 jobs:
-  build:
+  prepare-env:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install Dependencies
-      run: |        
-        sudo apt-get update
-        sudo apt-get install -y \
-          libgtk-4-dev \
-          pkg-config \
-          build-essential \
-          meson \
-          ninja-build \
-          libgirepository1.0-dev \
-          libwayland-dev \
-          wayland-protocols
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-        git clone https://github.com/wmww/gtk4-layer-shell
-        cd gtk4-layer-shell
-        meson setup build --prefix=/usrdir --libdir=lib
-        ninja -C build
-        sudo ninja -C build install
-        
-        sudo ldconfig
-        cd ..
-
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+    - name: Cache Docker layers
+      uses: actions/cache@v4
       with:
-        components: clippy, rustfmt
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ hashFiles('Dockerfile') }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+
+    - name: Build Builder Image
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        push: false
+        load: true
+        tags: arch-gtk4-builder:latest
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+    - name: Move cache
+      run: |
+        rm -rf /tmp/.buildx-cache
+        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  build-project:
+    needs: prepare-env
+    runs-on: ubuntu-latest
+    container:
+      image: arch-gtk4-builder:latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2
@@ -60,10 +70,27 @@ jobs:
     - name: Build Project
       run: cargo build --release
 
+    - name: Prepare Artifacts
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          echo "IS_RELEASE=true" >> $GITHUB_ENV
+        else
+          echo "VERSION=latest" >> $GITHUB_ENV
+          echo "IS_RELEASE=false" >> $GITHUB_ENV
+        fi
+        
+        cd target/release/
+        tar -czf ../../dummy-power-menu.tar.gz dummy-power-menu
+        cd ../../
+
     - name: Create release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
-        files: 
-          target/release/dummy-power-menu
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: ${{ env.VERSION }}
+        name: Release ${{ env.VERSION }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          dummy-power-menu.tar.gz
