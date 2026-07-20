@@ -1,11 +1,11 @@
 # Dummy Power Menu
 
-Простое Powermenu для окружения Hyprland
+Простой Power Menu для Hyprland.
 
-<details>
-<summary><h2>Скриншоты</h2></summary>
+Быстро позволяет выключить компьютер, перезагрузить систему или завершить сеанс.
 
-![](./screenshots/0.jpg)
+## Скриншоты
 
-![](./screenshots/1.jpg)
-</details>
+![Screenshot 1](./screenshots/0.webp)
+
+![Screenshot 2](./screenshots/1.webp)
