@@ -6,6 +6,6 @@
 
 ## Скриншоты
 
-![Screenshot 1](./screenshots/0.jpg)
+![Screenshot 1](./screenshots/0.webp)
 
-![Screenshot 2](./screenshots/1.jpg)
+![Screenshot 2](./screenshots/1.webp)
