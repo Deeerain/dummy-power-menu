@@ -1,10 +1,7 @@
-use gtk::glib::clone;
-use gtk::prelude::*;
-use gtk::{ApplicationWindow, Box, Button};
+use gtk4::prelude::*;
+use gtk4::{ApplicationWindow, Box, Button};
 
-use crate::action::{Action, execute_system_action};
-
-use super::DialogBuilder;
+use crate::action::{Action};
 
 pub struct ActionBarBuilder {
     window: ApplicationWindow,
@@ -21,14 +18,14 @@ impl ActionBarBuilder {
 
     pub fn build(self) -> Box {
         let hbox = Box::builder()
-            .orientation(gtk::Orientation::Horizontal)
+            .orientation(gtk4::Orientation::Horizontal)
             .spacing(5)
-            .halign(gtk::Align::Center)
+            .halign(gtk4::Align::Center)
             .build();
 
         for action in self.actions.clone() {
             let button = self.create_action_button(&action);
-            hbox.pack_start(&button, false, false, 0);
+            hbox.append(&button);
         }
 
         hbox
@@ -41,28 +38,6 @@ impl ActionBarBuilder {
             .label(action.icon)
             .tooltip_text(action.description)
             .build();
-
-        let window = self.window.clone();
-        let action = action.clone();
-
-        button.connect_clicked(clone!(@strong window, @strong action => move |_| {
-            if action.requires_confirmation {
-                let dialog_message = format!("{}?", action.description);
-                let dialog = DialogBuilder::new(&window, &dialog_message, clone!(@strong window, @strong action => move || {
-                    if let Err(e) = execute_system_action(&action.command) {
-                        eprintln!("{}", e);
-                    }
-                    window.close();
-                })).build();
-
-                dialog.show_all();
-            } else {
-                if let Err(e) = execute_system_action(&action.command) {
-                    eprintln!("{}", e);
-                }
-                window.close();
-            }
-        }));
 
         button
     }
